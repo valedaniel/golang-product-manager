@@ -19,8 +19,8 @@ type API struct {
 	logger  *log.Logger
 }
 
-func NewRouter(storage storage.ProductStorage, logger *log.Logger) http.Handler {
-	logger = log.New(os.Stdout, "HANDLER : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+func NewRouter(storage storage.ProductStorage) http.Handler {
+	logger := log.New(os.Stdout, "product-handler: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	api := &API{
 		storage: storage,

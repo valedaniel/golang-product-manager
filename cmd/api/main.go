@@ -59,7 +59,7 @@ func main() {
 
 	productStorage := storage.NewPostgresStore(db)
 
-	productRouter := handler.NewRouter(productStorage, logger)
+	productRouter := handler.NewRouter(productStorage)
 
 	srv := &http.Server{
 		Addr:         addr,
