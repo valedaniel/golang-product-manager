@@ -20,10 +20,10 @@ func main() {
 
 	logger := log.New(os.Stdout, "product-manager-API: ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	err := godotenv.Load()
-
-	if err != nil {
-		logger.Fatalf("Erro ao carregar o arquivo .env: %v", err)
+	if os.Getenv("DB_HOST") == "" {
+		if err := godotenv.Load(); err != nil {
+			logger.Fatalf("Erro ao carregar o arquivo .env: %v", err)
+		}
 	}
 
 	addr := os.Getenv("DB_ADDR")
