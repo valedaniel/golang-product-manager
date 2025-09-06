@@ -72,6 +72,11 @@ func (api *API) handleCreateProduct(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
+	if product.Name == "" || product.Price <= 0 {
+		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "Nome e preço são obrigatórios e o preço deve ser maior que zero"})
+		return
+	}
+
 	if err := api.storage.Create(request.Context(), &product); err != nil {
 		api.logger.Printf("Erro ao criar produto: %v", err)
 		writeJSON(writer, http.StatusInternalServerError, map[string]string{"error": "Erro ao criar produto"})
@@ -122,16 +127,35 @@ func (api *API) handleListProducts(writer http.ResponseWriter, request *http.Req
 
 func (api *API) handleUpdateProduct(writer http.ResponseWriter, request *http.Request) {
 	var product *models.Product
+
+	idStr := strings.TrimPrefix(request.URL.Path, "/products/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+		return
+	}
+
 	if err := readJSON(request, &product); err != nil {
 		api.logger.Printf("Erro ao decodificar JSON: %v", err)
 		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
 		return
 	}
 
-	err := api.storage.Update(request.Context(), product)
+	response, err := api.storage.Update(request.Context(), product, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeJSON(writer, http.StatusNotFound, map[string]string{"error": "Produto não encontrado"})
+			return
+		}
+
 		api.logger.Printf("Erro ao atualizar o produto: %v", err)
 		writeJSON(writer, http.StatusInternalServerError, map[string]string{"error": "Erro ao atualizar produto"})
+		return
+	}
+
+	if !response {
+		writeJSON(writer, http.StatusInternalServerError, map[string]string{"error": "Não foi possível atualizar o produto"})
+		return
 	}
 
 	writeJSON(writer, http.StatusOK, true)
@@ -147,7 +171,12 @@ func (api *API) handleDeleteProduct(writer http.ResponseWriter, request *http.Re
 
 	deleteErr := api.storage.Delete(request.Context(), id)
 	if deleteErr != nil {
-		api.logger.Printf("Erro ao deletar o produto: %v", err)
+		if errors.Is(deleteErr, sql.ErrNoRows) {
+			writeJSON(writer, http.StatusNotFound, map[string]string{"error": "Produto não encontrado"})
+			return
+		}
+
+		api.logger.Printf("Erro ao deletar o produto: %v", deleteErr)
 		writeJSON(writer, http.StatusInternalServerError, map[string]string{"error": "Erro ao deletar produto"})
 		return
 	}

@@ -11,7 +11,7 @@ type ProductStorage interface {
 	Create(ctx context.Context, product *models.Product) error
 	Get(ctx context.Context, id int) (*models.Product, error)
 	List(ctx context.Context) ([]*models.Product, error)
-	Update(ctx context.Context, product *models.Product) error
+	Update(ctx context.Context, product *models.Product, id int) (bool, error)
 	Delete(ctx context.Context, id int) error
 }
 
@@ -44,9 +44,6 @@ func (storage *PostgresStorage) Get(ctx context.Context, id int) (*models.Produc
 	err := storage.db.QueryRowContext(ctx, query, id).Scan(&product.Id, &product.Name, &product.Price, &product.CreatedAt, &product.UpdatedAt)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, err
 	}
 
@@ -79,26 +76,26 @@ func (storage *PostgresStorage) List(ctx context.Context) ([]*models.Product, er
 	return products, nil
 }
 
-func (storage *PostgresStorage) Update(ctx context.Context, product *models.Product) error {
-	query := "UPDATE products SET name = $1, price = $2, updatedAt = NOW() WHERE id = $3"
+func (storage *PostgresStorage) Update(ctx context.Context, product *models.Product, id int) (bool, error) {
+	query := "UPDATE products SET name = $1, price = $2, updatedAt = NOW() WHERE id = $3 RETURNING id, createdAt, updatedAt"
 
-	rows, err := storage.db.ExecContext(ctx, query, product.Name, product.Price, product.Id)
+	rows, err := storage.db.ExecContext(ctx, query, product.Name, product.Price, id)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	rowsAffected, err := rows.RowsAffected()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if rowsAffected == 0 {
-		return sql.ErrNoRows
+		return false, sql.ErrNoRows
 	}
 
-	return nil
+	return true, nil
 }
 
 func (storage *PostgresStorage) Delete(ctx context.Context, id int) error {
