@@ -65,6 +65,7 @@ func (api *API) productsIdHandler(writer http.ResponseWriter, request *http.Requ
 
 func (api *API) handleCreateProduct(writer http.ResponseWriter, request *http.Request) {
 	var product models.Product
+
 	if err := readJSON(request, &product); err != nil {
 		api.logger.Printf("Erro ao decodificar JSON: %v", err)
 		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "JSON inválido"})
@@ -108,6 +109,11 @@ func (api *API) handleListProducts(writer http.ResponseWriter, request *http.Req
 	if err != nil {
 		api.logger.Printf("Erro ao listar produtos: %v", err)
 		writeJSON(writer, http.StatusInternalServerError, map[string]string{"error": "Erro ao listar produtos"})
+		return
+	}
+
+	if products == nil {
+		writeJSON(writer, http.StatusOK, []models.Product{})
 		return
 	}
 

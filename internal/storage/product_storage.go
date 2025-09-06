@@ -26,9 +26,9 @@ func NewPostgresStore(db *sql.DB) *PostgresStorage {
 }
 
 func (storage *PostgresStorage) Create(ctx context.Context, product *models.Product) error {
-	query := "INSERT INTO products (name, price) VALUES ($1, $2)"
+	query := "INSERT INTO products (name, price) VALUES ($1, $2) RETURNING id, createdAt, updatedAt"
 
-	err := storage.db.QueryRowContext(ctx, query, product.Name, product.Price).Scan(&product.Id, &product.CreatedAt)
+	err := storage.db.QueryRowContext(ctx, query, product.Name, product.Price).Scan(&product.Id, &product.CreatedAt, &product.UpdatedAt)
 
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (storage *PostgresStorage) Get(ctx context.Context, id int) (*models.Produc
 	query := "SELECT id, name, price, createdAt, updatedAt FROM products WHERE id = $1"
 
 	product := &models.Product{}
-	err := storage.db.QueryRowContext(ctx, query, id).Scan(&product.Id, &product.Name, &product.Price, &product.CreatedAt)
+	err := storage.db.QueryRowContext(ctx, query, id).Scan(&product.Id, &product.Name, &product.Price, &product.CreatedAt, &product.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -54,7 +54,7 @@ func (storage *PostgresStorage) Get(ctx context.Context, id int) (*models.Produc
 }
 
 func (storage *PostgresStorage) List(ctx context.Context) ([]*models.Product, error) {
-	query := "SELECT id, name, price,  createdAt, updatedAt FROM products ORDER BY id ASC"
+	query := "SELECT id, name, price, createdAt, updatedAt FROM products ORDER BY id ASC"
 
 	rows, err := storage.db.QueryContext(ctx, query)
 	if err != nil {
@@ -65,11 +65,11 @@ func (storage *PostgresStorage) List(ctx context.Context) ([]*models.Product, er
 
 	var products []*models.Product
 	for rows.Next() {
-		var p models.Product
-		if err := rows.Scan(&p.Id, &p.Name, &p.Price, &p.CreatedAt); err != nil {
+		var product models.Product
+		if err := rows.Scan(&product.Id, &product.Name, &product.Price, &product.CreatedAt, &product.UpdatedAt); err != nil {
 			return nil, err
 		}
-		products = append(products, &p)
+		products = append(products, &product)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -80,7 +80,7 @@ func (storage *PostgresStorage) List(ctx context.Context) ([]*models.Product, er
 }
 
 func (storage *PostgresStorage) Update(ctx context.Context, product *models.Product) error {
-	query := "UPDATE products SET name = $1, price = $2, updated_at = NOW() WHERE id = $3"
+	query := "UPDATE products SET name = $1, price = $2, updatedAt = NOW() WHERE id = $3"
 
 	rows, err := storage.db.ExecContext(ctx, query, product.Name, product.Price, product.Id)
 
