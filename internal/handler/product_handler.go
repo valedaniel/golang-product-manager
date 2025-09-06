@@ -27,12 +27,16 @@ func NewRouter(storage storage.ProductStorage, logger *log.Logger) http.Handler 
 		logger:  logger,
 	}
 
-	mux := http.NewServeMux()
+	serveMux := http.NewServeMux()
 
-	mux.HandleFunc("/products", api.productsHandler)
-	mux.HandleFunc("/products/", api.productsIdHandler)
+	serveMux.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("API de Gerenciamento de Produtos"))
+	}))
 
-	return mux
+	serveMux.HandleFunc("/products", api.productsHandler)
+	serveMux.HandleFunc("/products/", api.productsIdHandler)
+
+	return serveMux
 }
 
 func (api *API) productsHandler(writer http.ResponseWriter, request *http.Request) {

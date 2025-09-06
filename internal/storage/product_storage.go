@@ -38,7 +38,7 @@ func (storage *PostgresStorage) Create(ctx context.Context, product *models.Prod
 }
 
 func (storage *PostgresStorage) Get(ctx context.Context, id int) (*models.Product, error) {
-	query := "SELECT id, name, price, created_at FROM products WHERE id = $1"
+	query := "SELECT id, name, price, createdAt, updatedAt FROM products WHERE id = $1"
 
 	product := &models.Product{}
 	err := storage.db.QueryRowContext(ctx, query, id).Scan(&product.Id, &product.Name, &product.Price, &product.CreatedAt)
@@ -54,7 +54,7 @@ func (storage *PostgresStorage) Get(ctx context.Context, id int) (*models.Produc
 }
 
 func (storage *PostgresStorage) List(ctx context.Context) ([]*models.Product, error) {
-	query := "SELECT id, name, price, created_at FROM products ORDER BY id ASC"
+	query := "SELECT id, name, price,  createdAt, updatedAt FROM products ORDER BY id ASC"
 
 	rows, err := storage.db.QueryContext(ctx, query)
 	if err != nil {
