@@ -11,6 +11,8 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/valedaniel/golang-product-manager/internal/handler"
+	"github.com/valedaniel/golang-product-manager/internal/storage"
 )
 
 func main() {
@@ -55,15 +57,13 @@ func main() {
 
 	logger.Println("Conexão com o banco de dados estabelecida com sucesso.")
 
-	mux := http.NewServeMux()
+	productStorage := storage.NewPostgresStore(db)
 
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("API de Gerenciamento de Produtos"))
-	}))
+	productRouter := handler.NewRouter(productStorage, logger)
 
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      productRouter,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
