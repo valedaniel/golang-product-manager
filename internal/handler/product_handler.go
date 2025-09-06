@@ -86,11 +86,19 @@ func (api *API) handleCreateProduct(writer http.ResponseWriter, request *http.Re
 	writeJSON(writer, http.StatusCreated, product)
 }
 
-func (api *API) handleGetByIdProduct(writer http.ResponseWriter, request *http.Request) {
+func (api *API) extractProductID(writer http.ResponseWriter, request *http.Request) (int, bool) {
 	idStr := strings.TrimPrefix(request.URL.Path, "/products/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+		return 0, false
+	}
+	return id, true
+}
+
+func (api *API) handleGetByIdProduct(writer http.ResponseWriter, request *http.Request) {
+	id, ok := api.extractProductID(writer, request)
+	if !ok {
 		return
 	}
 
@@ -128,10 +136,8 @@ func (api *API) handleListProducts(writer http.ResponseWriter, request *http.Req
 func (api *API) handleUpdateProduct(writer http.ResponseWriter, request *http.Request) {
 	var product *models.Product
 
-	idStr := strings.TrimPrefix(request.URL.Path, "/products/")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	id, ok := api.extractProductID(writer, request)
+	if !ok {
 		return
 	}
 
@@ -162,10 +168,8 @@ func (api *API) handleUpdateProduct(writer http.ResponseWriter, request *http.Re
 }
 
 func (api *API) handleDeleteProduct(writer http.ResponseWriter, request *http.Request) {
-	idStr := strings.TrimPrefix(request.URL.Path, "/products/")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
+	id, ok := api.extractProductID(writer, request)
+	if !ok {
 		return
 	}
 
