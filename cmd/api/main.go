@@ -55,8 +55,15 @@ func main() {
 
 	logger.Println("Conexão com o banco de dados estabelecida com sucesso.")
 
+	mux := http.NewServeMux()
+
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("API de Gerenciamento de Produtos"))
+	}))
+
 	srv := &http.Server{
 		Addr:         addr,
+		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
