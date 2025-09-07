@@ -33,34 +33,13 @@ func NewRouter(storage storage.ProductStorage) http.Handler {
 		w.Write([]byte("API de Gerenciamento de Produtos"))
 	}))
 
-	serveMux.HandleFunc("/products", api.productsHandler)
-	serveMux.HandleFunc("/products/", api.productsIdHandler)
+	serveMux.HandleFunc("POST /products", api.handleCreateProduct)
+	serveMux.HandleFunc("GET /products", api.handleListProducts)
+	serveMux.HandleFunc("DELETE /products/", api.handleDeleteProduct)
+	serveMux.HandleFunc("GET /products/", api.handleGetByIdProduct)
+	serveMux.HandleFunc("PUT /products/", api.handleUpdateProduct)
 
 	return serveMux
-}
-
-func (api *API) productsHandler(writer http.ResponseWriter, request *http.Request) {
-	switch request.Method {
-	case http.MethodPost:
-		api.handleCreateProduct(writer, request)
-	case http.MethodGet:
-		api.handleListProducts(writer, request)
-	default:
-		http.Error(writer, "Método não permitido", http.StatusMethodNotAllowed)
-	}
-}
-
-func (api *API) productsIdHandler(writer http.ResponseWriter, request *http.Request) {
-	switch request.Method {
-	case http.MethodGet:
-		api.handleGetByIdProduct(writer, request)
-	case http.MethodPut:
-		api.handleUpdateProduct(writer, request)
-	case http.MethodDelete:
-		api.handleDeleteProduct(writer, request)
-	default:
-		http.Error(writer, "Método não permitido", http.StatusMethodNotAllowed)
-	}
 }
 
 func (api *API) handleCreateProduct(writer http.ResponseWriter, request *http.Request) {
